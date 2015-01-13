@@ -6,9 +6,10 @@
     "empty": "rm library/*"
   },
   "dependencies": {
+    "async": "^0.9.0",
     "express": "3.17.1",
-    "shelljs": ">= 0.0.8",
-    "fluent-ffmpeg": "2.0.0-rc2"
+    "fluent-ffmpeg": "2.0.0-rc2",
+    "shelljs": ">= 0.0.8"
   },
   "description": "Stream and transcode your music library",
   "main": "app.js",
@@ -41,4 +42,3 @@
     "linux"
   ]
 }
-

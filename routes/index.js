@@ -1,6 +1,7 @@
 var fs = require('fs');
 var child_process = require('child_process');
 var ffmpeg = require('fluent-ffmpeg');
+var async = require('async');
 var FileMap = require('../lib/filemap').FileMap;
 var convert = require('../lib/convert');
 
@@ -13,17 +14,17 @@ exports.list = function(req, res){
   var filemapKeys = Object.keys(filemap);
   var files = [];
 
-  filemapKeys.forEach(function (id) {
-    var filename = filemap[id];
-    ffmpeg.ffprobe(filename, function (err, metadata) {
-      if (err) return console.error(err);
+  var q = async.queue(function(task, callback) {
+    ffmpeg.ffprobe(task.filename, function (err, metadata) {
+      if (err) return callback(err);
+
       var format = metadata.format;
       var tags = format.tags;
-
+      
       files.push({
-        songID: id,
-        ext: filename.replace(/.+\./, ''),
-        title: tags.title || filename.replace(/.+\//, ''),
+        songID: task.id,
+        ext: task.filename.replace(/.+\./, ''),
+        title: tags.title || task.filename.replace(/.+\//, ''),
         artist: tags.artist,
         album: tags.album,
         year: tags.date,
@@ -35,8 +36,12 @@ exports.list = function(req, res){
       if (files.length === filemapKeys.length) {
         res.send(files);
       }
+
+      callback();
     });
-  });
+  }, 10);
+
+  q.push(filemapKeys.map(function(k) { return {id: k, filename: filemap[k]}; }));
 };
 
 exports.transcode = function (req, res) {
